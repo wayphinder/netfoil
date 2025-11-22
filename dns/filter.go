@@ -180,15 +180,15 @@ func NewPolicy(configDirectory string, blockPunycode bool, pinResponseDomain boo
 			return nil, fmt.Errorf("invalid pinResponseDomain format: %s", d)
 		}
 
-		requestDomain := parts[0]
-		responseDomain := parts[1]
-		m, found := pinResponseDomainMap[responseDomain]
+		sourceDomain := parts[0]
+		destinationDomain := parts[1]
+		source, found := pinResponseDomainMap[sourceDomain]
 		if !found {
-			m = make(map[string]struct{})
+			source = make(map[string]struct{})
 		}
 
-		m[responseDomain] = struct{}{}
-		pinResponseDomainMap[requestDomain] = m
+		source[destinationDomain] = struct{}{}
+		pinResponseDomainMap[sourceDomain] = source
 	}
 
 	return &Policy{
