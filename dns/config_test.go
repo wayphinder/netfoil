@@ -69,7 +69,7 @@ func TestGetBool(t *testing.T) {
 	s := `DoHURL=https://example.com/dns-query
 DoHIPs=0.0.0.0
 DenyPunycode=true
-PinCNAME=true
+PinResponseDomain=true
 LogAllowed=false`
 
 	reader := strings.NewReader(s)
@@ -88,8 +88,8 @@ LogAllowed=false`
 		t.Errorf("RemoveECH should be false")
 	}
 
-	if config.PinCNAME != true {
-		t.Errorf("PinCNAME should be true")
+	if config.PinResponseDomain != true {
+		t.Errorf("PinResponseDomain should be true")
 	}
 
 	if config.LogAllowed != false {

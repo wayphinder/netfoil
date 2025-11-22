@@ -31,10 +31,10 @@ type Policy struct {
 	allowIPv4         []netip.Prefix
 	allowIPv6         []netip.Prefix
 	blockPunycode     bool
-	pinCNAME          bool
+	pinResponseDomain bool
 }
 
-func NewPolicy(configDirectory string, blockPunycode bool, pinCNAME bool) (*Policy, error) {
+func NewPolicy(configDirectory string, blockPunycode bool, pinResponseDomain bool) (*Policy, error) {
 	// TODO validate config
 	allowTLDs, err := readConfig(configDirectory, configFilenameAllowTLDs)
 	if err != nil {
@@ -179,6 +179,7 @@ func NewPolicy(configDirectory string, blockPunycode bool, pinCNAME bool) (*Poli
 		allowIPv4:         allowIPv4,
 		allowIPv6:         allowIPv6,
 		blockPunycode:     blockPunycode,
+		pinResponseDomain: pinResponseDomain,
 	}, nil
 }
 
@@ -295,7 +296,7 @@ func (p *Policy) responseIsAllowed(requestType RecordType, response *Response) (
 		}
 	}
 
-	if p.pinCNAME {
+	if p.pinResponseDomain {
 		for domain := range domains {
 			domainAllowed, domainReasons := p.domainIsAllowed(domain)
 			reasons = append(reasons, domainReasons)

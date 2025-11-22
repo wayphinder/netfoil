@@ -69,7 +69,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	policy, err := dns.NewPolicy(options.ConfigDirectory, config.DenyPunycode, config.PinCNAME)
+	policy, err := dns.NewPolicy(options.ConfigDirectory, config.DenyPunycode, config.PinResponseDomain)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)

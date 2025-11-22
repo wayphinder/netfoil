@@ -12,34 +12,34 @@ import (
 )
 
 const (
-	configFilenameAllowExact    = "allow.exact"
-	configFilenameDenyExact     = "deny.exact"
-	configFilenameAllowTLDs     = "allow.tld"
-	configFilenameDenyTLDs      = "deny.tld"
-	configFilenameAllowSuffixes = "allow.suffix"
-	configFilenameDenySuffixes  = "deny.suffix"
-	configFilenameIPv4Allow     = "allow.ipv4"
-	configFilenameIPv4Deny      = "deny.ipv4"
-	configFilenameIPv6Allow     = "allow.ipv6"
-	configFilenameIPv6Deny      = "deny.ipv6"
-	configFilenameKnownTLDs     = "known.tld"
-	configFilenamePinCNAME      = "pin.cname"
+	configFilenameAllowExact        = "allow.exact"
+	configFilenameDenyExact         = "deny.exact"
+	configFilenameAllowTLDs         = "allow.tld"
+	configFilenameDenyTLDs          = "deny.tld"
+	configFilenameAllowSuffixes     = "allow.suffix"
+	configFilenameDenySuffixes      = "deny.suffix"
+	configFilenameIPv4Allow         = "allow.ipv4"
+	configFilenameIPv4Deny          = "deny.ipv4"
+	configFilenameIPv6Allow         = "allow.ipv6"
+	configFilenameIPv6Deny          = "deny.ipv6"
+	configFilenameKnownTLDs         = "known.tld"
+	configFilenamePinResponseDomain = "pin.response-domain"
 
 	defaultMinTTL uint32 = 0
 	defaultMaxTTL uint32 = math.MaxUint32
 )
 
 type Config struct {
-	DoHURL       string
-	DoHIPs       []string
-	MinTTL       uint32
-	MaxTTL       uint32
-	DenyPunycode bool
-	RemoveECH    bool
-	PinCNAME     bool
-	LogAllowed   bool
-	LogDenied    bool
-	LogLevel     slog.Level
+	DoHURL            string
+	DoHIPs            []string
+	MinTTL            uint32
+	MaxTTL            uint32
+	DenyPunycode      bool
+	RemoveECH         bool
+	PinResponseDomain bool
+	LogAllowed        bool
+	LogDenied         bool
+	LogLevel          slog.Level
 }
 
 func ReadConfigFile(configDirectory string) (*Config, error) {
@@ -57,16 +57,16 @@ func ReadConfigFile(configDirectory string) (*Config, error) {
 type ConfigKey string
 
 const (
-	keyDohURL       ConfigKey = "DoHURL"
-	keyDohIPs       ConfigKey = "DoHIPs"
-	keyMinTTL       ConfigKey = "MinTTL"
-	keyMaxTTL       ConfigKey = "MaxTTL"
-	keyDenyPunycode ConfigKey = "DenyPunycode"
-	keyRemoveECH    ConfigKey = "RemoveECH"
-	keyPinCNAME     ConfigKey = "PinCNAME"
-	keyLogAllowed   ConfigKey = "LogAllowed"
-	keyLogDenied    ConfigKey = "LogDenied"
-	keyLogLevel     ConfigKey = "LogLevel"
+	keyDohURL            ConfigKey = "DoHURL"
+	keyDohIPs            ConfigKey = "DoHIPs"
+	keyMinTTL            ConfigKey = "MinTTL"
+	keyMaxTTL            ConfigKey = "MaxTTL"
+	keyDenyPunycode      ConfigKey = "DenyPunycode"
+	keyRemoveECH         ConfigKey = "RemoveECH"
+	keyPinResponseDomain ConfigKey = "PinResponseDomain"
+	keyLogAllowed        ConfigKey = "LogAllowed"
+	keyLogDenied         ConfigKey = "LogDenied"
+	keyLogLevel          ConfigKey = "LogLevel"
 )
 
 type ConfigMap struct {
@@ -170,7 +170,7 @@ func parseConfig(scanner *bufio.Scanner) (*Config, error) {
 		keyMaxTTL,
 		keyDenyPunycode,
 		keyRemoveECH,
-		keyPinCNAME,
+		keyPinResponseDomain,
 		keyLogAllowed,
 		keyLogDenied,
 		keyLogLevel,
@@ -232,7 +232,7 @@ func parseConfig(scanner *bufio.Scanner) (*Config, error) {
 		return nil, err
 	}
 
-	pinCNAME, err := configMap.GetBool(keyPinCNAME, false)
+	pinResponseDomains, err := configMap.GetBool(keyPinResponseDomain, false)
 	if err != nil {
 		return nil, err
 	}
@@ -253,16 +253,16 @@ func parseConfig(scanner *bufio.Scanner) (*Config, error) {
 	}
 
 	return &Config{
-		DoHURL:       dohURL,
-		DoHIPs:       dohIPs,
-		MinTTL:       minTTL,
-		MaxTTL:       maxTTL,
-		DenyPunycode: denyPunycode,
-		RemoveECH:    removeECH,
-		PinCNAME:     pinCNAME,
-		LogAllowed:   logAllowed,
-		LogDenied:    logDenied,
-		LogLevel:     logLevel,
+		DoHURL:            dohURL,
+		DoHIPs:            dohIPs,
+		MinTTL:            minTTL,
+		MaxTTL:            maxTTL,
+		DenyPunycode:      denyPunycode,
+		RemoveECH:         removeECH,
+		PinResponseDomain: pinResponseDomains,
+		LogAllowed:        logAllowed,
+		LogDenied:         logDenied,
+		LogLevel:          logLevel,
 	}, nil
 }
 
