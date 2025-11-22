@@ -23,6 +23,7 @@ const (
 	configFilenameIPv6Allow     = "allow.ipv6"
 	configFilenameIPv6Deny      = "deny.ipv6"
 	configFilenameKnownTLDs     = "known.tld"
+	configFilenamePinCNAME      = "pin.cname"
 
 	defaultMinTTL uint32 = 0
 	defaultMaxTTL uint32 = math.MaxUint32
@@ -35,6 +36,7 @@ type Config struct {
 	MaxTTL       uint32
 	DenyPunycode bool
 	RemoveECH    bool
+	PinCNAME     bool
 	LogAllowed   bool
 	LogDenied    bool
 	LogLevel     slog.Level
@@ -61,6 +63,7 @@ const (
 	keyMaxTTL       ConfigKey = "MaxTTL"
 	keyDenyPunycode ConfigKey = "DenyPunycode"
 	keyRemoveECH    ConfigKey = "RemoveECH"
+	keyPinCNAME     ConfigKey = "PinCNAME"
 	keyLogAllowed   ConfigKey = "LogAllowed"
 	keyLogDenied    ConfigKey = "LogDenied"
 	keyLogLevel     ConfigKey = "LogLevel"
@@ -167,6 +170,7 @@ func parseConfig(scanner *bufio.Scanner) (*Config, error) {
 		keyMaxTTL,
 		keyDenyPunycode,
 		keyRemoveECH,
+		keyPinCNAME,
 		keyLogAllowed,
 		keyLogDenied,
 		keyLogLevel,
@@ -228,6 +232,11 @@ func parseConfig(scanner *bufio.Scanner) (*Config, error) {
 		return nil, err
 	}
 
+	pinCNAME, err := configMap.GetBool(keyPinCNAME, false)
+	if err != nil {
+		return nil, err
+	}
+
 	logAllowed, err := configMap.GetBool(keyLogAllowed, true)
 	if err != nil {
 		return nil, err
@@ -250,6 +259,7 @@ func parseConfig(scanner *bufio.Scanner) (*Config, error) {
 		MaxTTL:       maxTTL,
 		DenyPunycode: denyPunycode,
 		RemoveECH:    removeECH,
+		PinCNAME:     pinCNAME,
 		LogAllowed:   logAllowed,
 		LogDenied:    logDenied,
 		LogLevel:     logLevel,

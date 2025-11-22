@@ -3,12 +3,13 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/tinfoil-factory/netfoil/dns"
-	"golang.org/x/sys/unix"
 	"log/slog"
 	"net"
 	"os"
 	"syscall"
+
+	"github.com/tinfoil-factory/netfoil/dns"
+	"golang.org/x/sys/unix"
 )
 
 const usage = `SYNOPSIS
@@ -68,7 +69,7 @@ func main() {
 	}
 	defer conn.Close()
 
-	policy, err := dns.NewPolicy(options.ConfigDirectory, config.DenyPunycode)
+	policy, err := dns.NewPolicy(options.ConfigDirectory, config.DenyPunycode, config.PinCNAME)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)

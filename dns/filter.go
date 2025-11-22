@@ -2,11 +2,12 @@ package dns
 
 import (
 	"fmt"
-	"github.com/tinfoil-factory/netfoil/suffixtrie"
 	"net"
 	"net/netip"
 	"regexp"
 	"strings"
+
+	"github.com/tinfoil-factory/netfoil/suffixtrie"
 )
 
 // https://datatracker.ietf.org/doc/html/rfc921
@@ -30,9 +31,10 @@ type Policy struct {
 	allowIPv4         []netip.Prefix
 	allowIPv6         []netip.Prefix
 	blockPunycode     bool
+	pinCNAME          bool
 }
 
-func NewPolicy(configDirectory string, blockPunycode bool) (*Policy, error) {
+func NewPolicy(configDirectory string, blockPunycode bool, pinCNAME bool) (*Policy, error) {
 	// TODO validate config
 	allowTLDs, err := readConfig(configDirectory, configFilenameAllowTLDs)
 	if err != nil {
@@ -293,14 +295,16 @@ func (p *Policy) responseIsAllowed(requestType RecordType, response *Response) (
 		}
 	}
 
-	for domain := range domains {
-		domainAllowed, domainReasons := p.domainIsAllowed(domain)
-		reasons = append(reasons, domainReasons)
+	if p.pinCNAME {
+		for domain := range domains {
+			domainAllowed, domainReasons := p.domainIsAllowed(domain)
+			reasons = append(reasons, domainReasons)
 
-		if !domainAllowed {
-			reason := fmt.Sprintf("block due to response domain: %s", domain)
-			reasons = append(reasons, FilterReason(reason))
-			return false, reasons
+			if !domainAllowed {
+				reason := fmt.Sprintf("block due to response domain: %s", domain)
+				reasons = append(reasons, FilterReason(reason))
+				return false, reasons
+			}
 		}
 	}
 
