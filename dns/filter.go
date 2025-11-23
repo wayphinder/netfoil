@@ -333,6 +333,20 @@ func (p *Policy) responseIsAllowed(questionName string, requestType RecordType, 
 		}
 	}
 
+	uniqueDomains := make(map[string]struct{})
+	for _, domain := range domains {
+		uniqueDomains[domain.SourceDomain] = struct{}{}
+		uniqueDomains[domain.DestinationDomain] = struct{}{}
+	}
+
+	for domain := range uniqueDomains {
+		correctFormat, reason := p.domainHasCorrectFormat(domain)
+		if !correctFormat {
+			reasons = append(reasons, reason)
+			return false, reasons
+		}
+	}
+
 	if p.pinResponseDomain {
 		for _, domain := range domains {
 			domainAllowed := false
@@ -410,6 +424,38 @@ func supportedInResponses(r RecordType) bool {
 }
 
 func (p *Policy) domainIsAllowed(domain string) (bool, FilterReason) {
+	correctlyFormatted, formatReason := p.domainHasCorrectFormat(domain)
+	if !correctlyFormatted {
+		return false, formatReason
+	}
+
+	if p.domainMatchesBlockExactly(domain) {
+		reason := fmt.Sprintf("block due to exact blocklist: %s", domain)
+		return false, FilterReason(reason)
+	}
+
+	if p.domainMatchesBlockSuffix(domain) {
+		reason := fmt.Sprintf("block due to suffix blocklist: %s", domain)
+		return false, FilterReason(reason)
+	}
+
+	// all block done, move to explicit allow
+
+	if p.domainMatchesAllowExactly(domain) {
+		reason := fmt.Sprintf("allow due to exact allowlist: %s", domain)
+		return true, FilterReason(reason)
+	}
+
+	if p.domainMatchesAllowSuffix(domain) {
+		reason := fmt.Sprintf("allow due to suffix allowlist: %s", domain)
+		return true, FilterReason(reason)
+	}
+
+	reason := fmt.Sprintf("block because no allow rule matched: %s", domain)
+	return false, FilterReason(reason)
+}
+
+func (p *Policy) domainHasCorrectFormat(domain string) (bool, FilterReason) {
 	// https://www.ietf.org/rfc/rfc1035.txt
 	if len(domain) > 253 {
 		reason := fmt.Sprintf("block due to domain being too long: %d", len(domain))
@@ -451,30 +497,8 @@ func (p *Policy) domainIsAllowed(domain string) (bool, FilterReason) {
 		return false, FilterReason(reason)
 	}
 
-	if p.domainMatchesBlockExactly(domain) {
-		reason := fmt.Sprintf("block due to exact blocklist: %s", domain)
-		return false, FilterReason(reason)
-	}
-
-	if p.domainMatchesBlockSuffix(domain) {
-		reason := fmt.Sprintf("block due to suffix blocklist: %s", domain)
-		return false, FilterReason(reason)
-	}
-
-	// all block done, move to explicit allow
-
-	if p.domainMatchesAllowExactly(domain) {
-		reason := fmt.Sprintf("allow due to exact allowlist: %s", domain)
-		return true, FilterReason(reason)
-	}
-
-	if p.domainMatchesAllowSuffix(domain) {
-		reason := fmt.Sprintf("allow due to suffix allowlist: %s", domain)
-		return true, FilterReason(reason)
-	}
-
-	reason := fmt.Sprintf("block because no allow rule matched: %s", domain)
-	return false, FilterReason(reason)
+	reason := fmt.Sprintf("allow due to correct format: %s", domain)
+	return true, FilterReason(reason)
 }
 
 func (p *Policy) domainMatchesAllowExactly(domain string) bool {
