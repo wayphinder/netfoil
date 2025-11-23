@@ -1,6 +1,7 @@
 package main
 
 import (
+	"crypto/x509"
 	"flag"
 	"fmt"
 	"log/slog"
@@ -28,6 +29,9 @@ OPTIONS
         --disable-speculation
 			Disable speculative execution (default: false).
 
+        --pin-ca
+            Path to CA to use (default: empty)
+
         --help, -h
 			Print the help message.
 
@@ -36,6 +40,12 @@ Example
 
 func main() {
 	options, err := processInput()
+	if err != nil {
+		println(err.Error())
+		os.Exit(1)
+	}
+
+	caCertPool, err := loadCACertPool(options.PinCA)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)
@@ -75,11 +85,29 @@ func main() {
 		os.Exit(1)
 	}
 
-	err = dns.Server(conn, config, policy)
+	err = dns.Server(conn, config, policy, caCertPool)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)
 	}
+}
+
+func loadCACertPool(path string) (*x509.CertPool, error) {
+	if path == "" {
+		return nil, nil
+	}
+
+	caCert, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("error reading CA certificate: %w", err)
+	}
+
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		return nil, fmt.Errorf("error parsing CA certificate")
+	}
+
+	return caCertPool, nil
 }
 
 func disableSpeculation(disable bool) error {
@@ -134,12 +162,13 @@ type Options struct {
 	Port               int
 	ConfigDirectory    string
 	DisableSpeculation bool
+	PinCA              string
 }
 
 func processInput() (*Options, error) {
 	flags := flag.NewFlagSet("all", flag.ExitOnError)
 	var help, h, disableSpeculation bool
-	var configPath, ipString string
+	var configPath, ipString, pinCA string
 	var portInt int
 	flags.BoolVar(&help, "help", false, "")
 	flags.BoolVar(&h, "h", false, "")
@@ -147,6 +176,7 @@ func processInput() (*Options, error) {
 	flags.IntVar(&portInt, "port", 53, "")
 	flags.StringVar(&ipString, "ip", "127.0.0.1", "")
 	flags.StringVar(&configPath, "config-directory", "/etc/netfoil", "")
+	flags.StringVar(&pinCA, "pin-ca", "", "")
 
 	err := flags.Parse(os.Args[1:])
 	if err != nil || help || h {
@@ -170,6 +200,7 @@ func processInput() (*Options, error) {
 		Port:               portInt,
 		ConfigDirectory:    configPath,
 		DisableSpeculation: disableSpeculation,
+		PinCA:              pinCA,
 	}, nil
 }
 
