@@ -91,7 +91,7 @@ func main() {
 	}
 
 	// Apply late for a shorter allowlist
-	err = applySystemCallFilter(options.FilterSystemCalls)
+	err = applySystemCallFilter(options.FilterSystemCalls, caCertPool)
 	if err != nil {
 		println(err.Error())
 		os.Exit(1)
@@ -145,7 +145,7 @@ func disableSpeculation(disable bool) error {
 	return nil
 }
 
-func applySystemCallFilter(filter bool) error {
+func applySystemCallFilter(filter bool, caCertPool *x509.CertPool) error {
 	if filter {
 		// NoNewPrivs must be applied before the seccomp filter
 		_, _, errInt := syscall.AllThreadsSyscall6(syscall.SYS_PRCTL, unix.PR_SET_NO_NEW_PRIVS, uintptr(1), 0, 0, 0, 0)
@@ -178,13 +178,6 @@ func applySystemCallFilter(filter bool) error {
 			unix.SYS_WRITE,
 			unix.SYS_PREAD64,
 
-			// @file-system
-			unix.SYS_FCNTL,
-			unix.SYS_FSTAT,
-			unix.SYS_GETDENTS64,
-			unix.SYS_OPENAT,
-			unix.SYS_READLINKAT,
-
 			// @network-io
 			unix.SYS_CONNECT,
 			unix.SYS_GETPEERNAME,
@@ -216,6 +209,19 @@ func applySystemCallFilter(filter bool) error {
 
 			// @resources
 			//unix.SYS_SETRLIMIT,
+		}
+
+		if caCertPool == nil {
+			additionalAllowedSyscalls := []uint32{
+				// @file-system
+				unix.SYS_FCNTL,
+				unix.SYS_FSTAT,
+				unix.SYS_GETDENTS64,
+				unix.SYS_OPENAT,
+				unix.SYS_READLINKAT,
+			}
+
+			allowedSyscalls = append(allowedSyscalls, additionalAllowedSyscalls...)
 		}
 
 		instructions := make([]bpf.Instruction, 0)
