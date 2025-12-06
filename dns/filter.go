@@ -177,7 +177,7 @@ func NewPolicy(configDirectory string, blockPunycode bool, pinResponseDomain boo
 	for _, d := range pinResponseDomainRaw {
 		parts := strings.Split(d, ":")
 		if len(parts) != 2 {
-			return nil, fmt.Errorf("invalid pinResponseDomain format: %s", d)
+			return nil, fmt.Errorf("invalid PinResponseDomain format: %s", d)
 		}
 
 		sourceDomain := parts[0]
